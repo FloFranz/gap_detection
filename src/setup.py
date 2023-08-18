@@ -13,7 +13,7 @@ import os
 
 # create directory called 'data' with subdirectories
 # 'raw_data', 'processed_data', and 'metadata'
-base_dir = os.path.abspath('.')  # Get the absolute path of the current directory
+base_dir = os.path.abspath('.')[:-8]
 
 data_directories = [
     os.path.join(base_dir, 'data/raw_data/nDSM'),
@@ -27,7 +27,11 @@ for directory in data_directories:
         os.makedirs(directory)
 
 # create other necessary directories
-other_directories = ['src', 'scripts', 'output']
+other_directories = [
+    os.path.join(base_dir, 'src'),
+    os.path.join(base_dir, 'scripts'),
+    os.path.join(base_dir, 'output')
+ ]
 
 for directory in other_directories:
     if not os.path.exists(directory):
@@ -38,12 +42,15 @@ for directory in other_directories:
 
 # define raw data directory
 raw_data_dir = 'data/raw_data/'
+raw_data_dir = os.path.join(base_dir, raw_data_dir)
 
 # define processed data directory
 processed_data_dir = 'data/processed_data/'
+processed_data_dir = os.path.join(base_dir, processed_data_dir)
 
 # define output directory
 output_dir = 'output/'
+output_dir = os.path.join(base_dir, output_dir)
 
 # list the files and directories
-print(os.listdir('.'))  # Lists files and directories in the current directory
+print(os.listdir(base_dir))
