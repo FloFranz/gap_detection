@@ -18,6 +18,7 @@ base_dir = os.path.abspath('.')[:-8]
 data_directories = [
     os.path.join(base_dir, 'data/raw_data/nDSM'),
     os.path.join(base_dir, 'data/raw_data/DOP'),
+    os.path.join(base_dir, 'data/raw_data/gaps_poly'),
     os.path.join(base_dir, 'data/processed_data'),
     os.path.join(base_dir, 'data/metadata')
 ]
