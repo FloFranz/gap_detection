@@ -9,6 +9,7 @@
 from pathlib import Path
 
 def make_folders():
+    
     # 01 - setup working environment
     # --------------------------------
 
@@ -27,7 +28,6 @@ def make_folders():
     for directory in data_directories:
         directory.mkdir(parents=True, exist_ok=True)
         print(f'created directory {directory.relative_to(base_dir)}')
-
 
     # create other necessary directories
     other_directories = [
@@ -49,7 +49,5 @@ def make_folders():
 
     # define output directory
     output_dir = base_dir / 'output'
-
-
 
     return raw_data_dir, processed_data_dir, output_dir
