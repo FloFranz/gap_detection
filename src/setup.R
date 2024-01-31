@@ -114,4 +114,4 @@ load_packages <- function(packages) {
 }
 
 
-load_packages(c('terra', 'sf', 'lidR', 'stats','dplyr', 'ggplot2'))
+load_packages(c('terra', 'sf', 'ForestGapR', 'stats','dplyr', 'ggplot2'))
