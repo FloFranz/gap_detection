@@ -21,6 +21,7 @@ def make_folders():
         base_dir / 'data' / 'raw_data' / 'nDSM',
         base_dir / 'data' / 'raw_data' / 'DOP',
         base_dir / 'data' / 'raw_data' / 'gaps_poly',
+        base_dir / 'data' / 'raw_data' / 'orga',
         base_dir / 'data' / 'processed_data',
         base_dir / 'data' / 'metadata'
     ]
