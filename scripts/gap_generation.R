@@ -1,12 +1,14 @@
-#-------------------------------------------------------------
+#----------------------------------------------------------------------------
 # Name:         gap_generation.R
 # Description:  Script automatically generates canopy gaps as
 #               training polygons for the deep learning model.
-#               An airborne laserscanning (ALS)-based canopy 
-#               height model (CHM) in 0.5 m resolution is used
-#               for this task.
+#               For this purpose, the ForestGapR package is applied 
+#               to an airborne laserscanning (ALS)-based canopy 
+#               height model (CHM) in 0.5 m resolution.
+#               See publication to the package:
+#               Silva et al. 2019,  https://doi.org/10.1111/2041-210X.13211
 # Contact:      florian.franz@nw-fva.de
-#-------------------------------------------------------------
+#----------------------------------------------------------------------------
 
 
 
@@ -62,5 +64,66 @@ terra::plot(chm_revier, col = viridis::viridis(50))
 par(par_org)
 
 
+
+# 04 - automatic canopy gap detection
+#-------------------------------------
+
+# determine overstory height
+# assuming overstory height is the
+# 95th percentile of the height values
+overstory_height <- stats::quantile(chm_revier,
+                                    probs = 0.95,
+                                    na.rm = T)
+
+# define height threshold for gaps:
+# areas where vegetation height
+# is less than half of overstory height
+half_overstory_height <- overstory_height / 2
+
+# function getForestGaps from the
+# ForestGapR package is used
+# to get canopy gaps
+# --> https://github.com/carlos-alberto-silva/ForestGapR
+# min. size 10m², max. size 5000m²
+canopy_gaps <- ForestGapR::getForestGaps(
+  chm_layer = chm_revier,
+  threshold = half_overstory_height,
+  size = c(10,5000)
+  )
+
+# convert raster to vector (polygons)
+canopy_gaps <- terra::as.polygons(
+  canopy_gaps,
+  round = T,
+  aggregate = T,
+  values = F
+  )
+
+# convert to an sf object
+canopy_gaps <- sf::st_as_sf(canopy_gaps)
+
+# write to disk
+if (!file.exists(file.path(
+  processed_data_dir, 'gap_polygons', 'gap_polys_hilwartshausen.shp'))) {
+ 
+  dir.create(file.path(processed_data_dir, 'gap_polygons'), recursive = T)
+  sf::st_write(canopy_gaps,
+               file.path(processed_data_dir,
+                         'gap_polygons',
+                         'gap_polys_hilwartshausen.shp'))
+  
+} else {
+    
+  canopy_gaps <- sf::st_read(file.path(
+    processed_data_dir, 'gap_polygons', 'gap_polys_hilwartshausen.shp'))
+  
+}
+
+# quick overview
+terra::plot(chm_revier, col = viridis::viridis(50))
+terra::plot(canopy_gaps$geometry,
+            border = 'red',
+            lwd = 0.5,
+            add = T)
 
 
