@@ -126,4 +126,13 @@ terra::plot(canopy_gaps$geometry,
             lwd = 0.5,
             add = T)
 
+# quick overview of a smaller subset
+ext <- terra::ext(546423.5, 548000, 5728983, 5731000)
+chm_revier_ext <- terra::crop(chm_revier, ext, mask = T)
+terra::plot(chm_revier_ext, col = viridis::viridis(50))
+terra::plot(canopy_gaps$geometry,
+            border = 'white',
+            lwd = 0.5,
+            add = T)
+
 
