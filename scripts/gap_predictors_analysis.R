@@ -73,7 +73,18 @@ for (i in c('red', 'green', 'blue', 'nir', 'chm')) {
 
 ggplot2::ggplot(data = tmp, ggplot2::aes(x = y, y = x)) + 
   ggplot2::geom_boxplot() + 
-  ggplot2::facet_wrap(~ k, scales = 'free')
+  ggplot2::facet_wrap(~ k, scales = 'free') +
+  ggplot2::labs(y = 'pixel value', x = '')
+
+ggplot2::ggplot(data = tmp, ggplot2::aes(x = factor(k, levels = c("blue", "green", "red", 'nir', 'chm')), y = x, fill = y)) + 
+  ggplot2::geom_boxplot() + 
+  ggplot2::labs(x = '', y = "pixel value") +
+  ggplot2::theme_minimal() +
+  ggplot2::scale_fill_manual(values = c('grey', 'grey40'), labels = c('Gaps', 'Non-Gaps')) +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+                 legend.title = ggplot2::element_blank())
+
+
 
 
 
