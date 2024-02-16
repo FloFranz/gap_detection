@@ -34,7 +34,7 @@ train_df <- train_df %>%
   )
 
 # select a smaller subset
-train_df_subset <- train_df[seq(1, nrow(train_df), by = 25), ]
+train_df_subset <- train_df[seq(1, nrow(train_df), by = 10), ]
 
 # remove NAs
 train_df_subset <- na.omit(train_df_subset)
@@ -57,8 +57,12 @@ f_bin <- function(data, mapping, ...) {
     colorspace::scale_fill_continuous_divergingx(pal = 'Roma')
 }
 
-GGally::ggpairs(data = train_df_subset_filtered[, c('red', 'green', 'blue', 'nir', 'chm')],
+GGally::ggpairs(data = train_df_subset[, c('red', 'green', 'blue', 'nir', 'chm')],
                 lower = list(continuous = f_bin))
+
+# correlogram
+corrplot::corrplot(cor(train_df_subset[, -c(1:2)]),
+                   method = 'circle', type= 'full')
 
 # boxplots gaps vs. non-gaps
 tmp <- NULL
