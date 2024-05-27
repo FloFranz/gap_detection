@@ -21,7 +21,6 @@ def make_folders():
         base_dir / 'data' / 'raw_data' / 'nDSMs',
         base_dir / 'data' / 'raw_data' / 'DOPs',
         base_dir / 'data' / 'raw_data' / 'orga',
-        base_dir / 'data' / 'processed_data',
         base_dir / 'data' / 'processed_data' / 'nDSMs',
         base_dir / 'data' / 'processed_data' / 'DOPs',
         base_dir / 'data' / 'processed_data' / 'datasets',
