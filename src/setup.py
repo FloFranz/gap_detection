@@ -18,11 +18,16 @@ def make_folders():
     base_dir = Path.cwd().parent
 
     data_directories = [
-        base_dir / 'data' / 'raw_data' / 'nDSM',
-        base_dir / 'data' / 'raw_data' / 'DOP',
-        base_dir / 'data' / 'raw_data' / 'gaps_poly',
+        base_dir / 'data' / 'raw_data' / 'nDSMs',
+        base_dir / 'data' / 'raw_data' / 'DOPs',
         base_dir / 'data' / 'raw_data' / 'orga',
         base_dir / 'data' / 'processed_data',
+        base_dir / 'data' / 'processed_data' / 'nDSMs',
+        base_dir / 'data' / 'processed_data' / 'DOPs',
+        base_dir / 'data' / 'processed_data' / 'datasets',
+        base_dir / 'data' / 'processed_data' / 'gap_polygons_ALS',
+        base_dir / 'data' / 'processed_data' / 'models',
+        base_dir / 'data' / 'processed_data' / 'test_areas',
         base_dir / 'data' / 'metadata'
     ]
 
