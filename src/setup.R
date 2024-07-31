@@ -16,21 +16,27 @@
 # 'raw_data', 'processed_data', and 'metadata'
 if (!file.exists(paste('data')) |
     (!file.exists(paste('data/raw_data')) |
-      (!file.exists(paste('data/raw_data/nDSM')) |
-        (!file.exists(paste('data/raw_data/DOP')) |
+      (!file.exists(paste('data/raw_data/nDSMs')) |
+        (!file.exists(paste('data/raw_data/DOPs')) |
          (!file.exists(paste('data/raw_data/gaps_poly')) |
           (!file.exists(paste('data/raw_data/orga')) |
             (!file.exists(paste('data/processed_data')) |
-             (!file.exists(paste('data/metadata'))
-              )))))))) {
+             (!file.exists(paste('data/processed_data/DOPs')) |
+              (!file.exists(paste('data/processed_data/nDSMs')) |
+               (!file.exists(paste('data/processed_data/gap_polygons_ALS')) |
+                (!file.exists(paste('data/metadata'))
+                 ))))))))))) {
   
   dir.create('data')
   dir.create('data/raw_data')
-  dir.create('data/raw_data/nDSM')
-  dir.create('data/raw_data/DOP')
+  dir.create('data/raw_data/nDSMs')
+  dir.create('data/raw_data/DOPs')
   dir.create('data/raw_data/gaps_poly')
   dir.create('data/raw_data/orga')
   dir.create('data/processed_data')
+  dir.create('data/processed_data/DOPs')
+  dir.create('data/processed_data/nDSMs')
+  dir.create('data/processed_data/gap_polygons_ALS')
   dir.create('data/metadata')
   
 } else {
