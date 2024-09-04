@@ -2,11 +2,9 @@
 # Name:         gap_generation.R
 # Description:  Script automatically generates canopy gaps as
 #               training and testing polygons for the deep learning model.
-#               For this purpose, the ForestGapR package is applied 
+#               For this purpose, a multi-height-stage approach is applied 
 #               to an airborne laserscanning (ALS)-based canopy 
 #               height model (CHM) in 0.5 m resolution.
-#               See publication to the package:
-#               Silva et al. 2019,  https://doi.org/10.1111/2041-210X.13211
 # Contact:      florian.franz@nw-fva.de
 #----------------------------------------------------------------------------
 
@@ -20,8 +18,8 @@ source('src/setup.R', local = T)
 # 01 - set file paths
 #---------------------
 
-chm_path <- file.path(raw_data_dir, 'nDSM')
-dop_path <- file.path(raw_data_dir, 'DOP')
+chm_path <- file.path(raw_data_dir, 'nDSMs')
+dop_path <- file.path(raw_data_dir, 'DOPs')
 orga_path <- file.path(raw_data_dir, 'orga')
 
 
@@ -30,13 +28,25 @@ orga_path <- file.path(raw_data_dir, 'orga')
 #-------------------
 
 # CHM
-chm_solling <- terra::rast(file.path(chm_path, 'chm_solling.tif'))
+chm_solling <- terra::rast(file.path(chm_path, 'chm_solling_2024_als.tif'))
 chm_solling
 
 # DOPs
-dop_train <- terra::rast(file.path(dop_path, 'dop_train.tif'))
+dop_train_files <- list.files(path = dop_path,
+                              pattern = "dop_train_.*\\.tif$",
+                              full.names = T)
+
+dops_train <- list()
+
+for (file in seq_along(dop_train_files)) {
+  
+  dops_train[[file]] <- terra::rast(dop_train_files[file])
+  
+}
+
+dops_train
+
 dop_test <- terra::rast(file.path(dop_path, 'dop_test.tif'))
-dop_train
 dop_test
 
 
@@ -44,26 +54,98 @@ dop_test
 # 03 - data preparation
 #-------------------------------------
 
-# assign CRS to CHM (ETRS89 / UTM zone 32N)
-terra::crs(chm_solling) <- 'EPSG:25832'
+# assign CRS to CHM (ETRS89 / UTM zone 32N) if it is different or not set
+if (terra::crs(chm_solling) != 'EPSG:25832') {
+  terra::crs(chm_solling) <- 'EPSG:25832'
+}
 
-# crop CHMs to DOPs extent
-chm_train <- terra::crop(chm_solling,
-                         dop_train)
+# function to reduce resolution of DOPs
+# to speed up further processing
+resample_dops <- function(dops, factor) {
+  
+  resampled_dops <- lapply(dops, function(dop) {
+    
+    template <- terra::rast(dop)
+    terra::res(template) <- terra::res(dop) * factor
+    terra::resample(dop, template, method = 'bilinear')
+    
+  })
+  
+  return(resampled_dops)
+  
+}
 
-chm_test <- terra::crop(chm_solling,
-                        dop_test)
+# training area:
+# 1. merge DOPs
+# 2. crop CHM to the extent of the merged DOPs
 
-# smooth cropped CHMs
-w <- matrix(1, 3, 3)
-chm_train <- terra::focal(chm_train, w, fun = mean, na.rm = T)
-chm_test <- terra::focal(chm_test, w, fun = mean, na.rm = T)
+# define output file paths
+file_path_dops_train_merg <- file.path(processed_data_dir, 'DOPs', 'dops_train_merged.tif')
+file_path_chm_train <- file.path(processed_data_dir, 'nDSMs', 'chm_train_als.tif')
+
+if (!file.exists(file_path_dops_train_merg) || !file.exists(file_path_chm_train)) {
+  
+  cat('reduce resolution of DOPs...\n')
+  resampled_dops_train <- resample_dops(dops_train, factor = 100)
+  
+  cat('merge DOPs...\n')
+  dops_train_merged <- do.call(terra::merge, resampled_dops_train)
+  terra::writeRaster(dops_train_merged, file_path_dops_train_merg, overwrite = T)
+  
+  cat('crop CHM to merged DOP extent...\n')
+  chm_train <- terra::crop(chm_solling, dops_train_merged)
+  terra::writeRaster(chm_train, file_path_chm_train, overwrite = T)
+  
+  cat('process completed\n')
+  
+} else {
+  
+  cat('load existing merged DOP and cropped CHM...\n')
+  dops_train_merged <- terra::rast(file.path(file_path_dops_train_merg))
+  chm_train <- terra::rast(file.path(file_path_chm_train))
+  cat('files loaded successfully\n')
+  
+}
+
+# testing area:
+# just crop CHM to the extent of the test DOP
+
+# define output file path
+file_path_chm_test <- file.path(processed_data_dir, 'nDSMs', 'chm_test_als.tif')
+
+if (!file.exists(file_path_chm_test)) {
+  
+  cat('crop CHM to DOP extent...\n')
+  chm_test <- terra::crop(chm_solling, dop_test)
+  terra::writeRaster(chm_test, file_path_chm_test, overwrite = T)
+  
+  cat('process completed\n')
+  
+} else {
+  
+  cat('load existing cropped CHM...\n')
+  chm_test <- terra::rast(file.path(file_path_chm_test))
+  cat('file loaded successfully\n')
+  
+}
 
 # quick overview
 par_org <- par()
 par(mfrow = c(1,2))
-terra::plot(chm_train, col = viridis::viridis(50))
-terra::plotRGB(dop_train, r = 1, g = 2, b = 3, stretch = 'lin', axes = T, mar = 3)
+terra::plot(chm_train, col = viridis::viridis(50),
+            main = 'CHM train area')
+terra::plotRGB(dops_train_merged, r = 1, g = 2, b = 3,
+               stretch = 'lin', axes = T, mar = 3,
+               main = 'DOP train area')
+par(par_org)
+
+par_org <- par()
+par(mfrow = c(1,2))
+terra::plot(chm_test, col = viridis::viridis(50),
+            main = 'CHM test area')
+terra::plotRGB(dop_test, r = 1, g = 2, b = 3,
+               stretch = 'lin', axes = T, mar = 3,
+               main = 'DOP test area')
 par(par_org)
 
 
@@ -71,64 +153,30 @@ par(par_org)
 # 04 - automatic canopy gap detection
 #-------------------------------------
 
-# function to detect gaps in the CHMs 
-gap_detection <- function(chm_raster, output_name) {
-  
-  # determine overstory height assuming overstory height
-  # is the 95th percentile of the height values
-  overstory_height <- stats::quantile(chm_raster,
-                                      probs = 0.95,
-                                      na.rm = TRUE)
-  
-  # define height threshold for gaps:
-  # areas where vegetation height
-  # is less than half of overstory height
-  half_overstory_height <- overstory_height / 2
-  
-  # function getForestGaps from the ForestGapR package
-  # is used to get canopy gaps
-  # --> https://github.com/carlos-alberto-silva/ForestGapR
-  # min. size 10m², max. size 5000m²
-  canopy_gaps <- ForestGapR::getForestGaps(
-    chm_layer = chm_raster,
-    threshold = half_overstory_height,
-    size = c(10,5000)
-  )
-  
-  # convert raster to vector (polygons)
-  canopy_gaps <- terra::as.polygons(
-    canopy_gaps,
-    round = TRUE,
-    aggregate = TRUE,
-    values = FALSE
-  )
-  
-  # convert to an sf object
-  canopy_gaps <- sf::st_as_sf(canopy_gaps)
-  
-  # define output file path
-  output_file_path <- file.path(processed_data_dir, 'gap_polygons', paste0(output_name, '.shp'))
-  
-  # write to disk
-  if (!file.exists(output_file_path)) {
-    
-    dir.create(file.path(processed_data_dir, 'gap_polygons'), recursive = T)
-    sf::st_write(canopy_gaps, output_file_path)
-    
-  } else {
-    
-    # if the file already exists, read it
-    canopy_gaps <- sf::st_read(output_file_path)
-    
-  }
-  
-  return(canopy_gaps)
-  
-}
+# source function for gap detection
+source('src/detect_gaps_multi_stage.R', local = T)
+
+# define height stages for multi-stage gap detection
+stages <- list(
+  list(gap_height_threshold = 5, size = c(10, 5000), buffer_width = 20, percentile_threshold = 10),
+  list(gap_height_threshold = 10, size = c(10, 5000), buffer_width = 20, percentile_threshold = 20),
+  list(gap_height_threshold = 15, size = c(10, 5000), buffer_width = 20, percentile_threshold = 30)
+)
 
 # apply function to chm_train and chm_test
-canopy_gaps_train <- gap_detection(chm_train, 'gap_polys_train')
-canopy_gaps_test <- gap_detection(chm_test, 'gap_polys_test')
+canopy_gaps_train <- detect_gaps_multi_stage(
+  chm = chm_train,
+  stages = stages,
+  output_dir = file.path(processed_data_dir, 'gap_polygons_ALS'),
+  area_name = 'train'
+)
+
+canopy_gaps_test <- detect_gaps_multi_stage(
+  chm = chm_test,
+  stages = stages,
+  output_dir = file.path(processed_data_dir, 'gap_polygons_ALS'),
+  area_name = 'test'
+)
 
 # quick overview
 par_org <- par()
